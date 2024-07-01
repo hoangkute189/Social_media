@@ -1,6 +1,6 @@
 import "./message.css";
 
-export default function Message({ own }) {
+export default function Message({ message, own }) {
   return (
     <div className={own ? "message own" : "message"}>
       <div className="messageTop">
@@ -10,9 +10,7 @@ export default function Message({ own }) {
           alt=""
         />
         <p className="messageText">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Quaerat
-          provident, reiciendis amet qui perferendis sapiente voluptatem
-          obcaecati. Sed cum velit accusantium qui autem, repellendus debitis.
+          {message.text}
         </p>
       </div>
       <div className="messageBottom">8 years ago</div>

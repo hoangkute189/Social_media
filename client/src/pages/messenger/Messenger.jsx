@@ -6,23 +6,43 @@ import ChatOnline from "../../components/chatOnline/ChatOnline";
 import { useContext, useEffect, useRef, useState } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import axios from "axios";
+import { io } from "socket.io-client";
 
 export default function Messenger() {
-  const { user } = useContext(AuthContext);
   const [conversations, setConversations] = useState([]);
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  // const [arrivalMessage, setArrivalMessage] = useState(null);
+  // const [onlineUsers, setOnlineUsers] = useState([]);
+  const socket = useRef();
+  const { user } = useContext(AuthContext);
   const scrollRef = useRef();
+
+  useEffect(() => {
+    socket.current = io("ws://localhost:8900");
+  }, []);
+
+  // useEffect(() => {
+  //   arrivalMessage &&
+  //     currentChat?.members.includes(arrivalMessage.sender) &&
+  //     setMessages((prev) => [...prev, arrivalMessage]);
+  // }, [arrivalMessage, currentChat]);
+
+  useEffect(() => {
+    socket.current.emit("addUser", user._id);
+    socket.current.on("getUsers", (users) => {
+      console.log(users)
+    });
+  }, [user]);
 
   useEffect(() => {
     const getConversations = async () => {
       try {
         const res = await axios.get("/conversations/" + user._id);
         setConversations(res.data);
-        console.log(res.data);
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        console.log(err);
       }
     };
     getConversations();
@@ -48,6 +68,16 @@ export default function Messenger() {
       conversationId: currentChat._id,
     };
 
+    // const receiverId = currentChat.members.find(
+    //   (member) => member !== user._id
+    // );
+
+    // socket.current.emit("sendMessage", {
+    //   senderId: user._id,
+    //   receiverId,
+    //   text: newMessage,
+    // });
+
     try {
       const res = await axios.post("/messages", message);
       setMessages([...messages, res.data]);
@@ -70,7 +100,7 @@ export default function Messenger() {
             <input placeholder="Search for friends" className="chatMenuInput" />
             {conversations.map((c) => (
               <div onClick={() => setCurrentChat(c)}>
-                <Conversation conversation={c} currentUser={user} key={c._id} />
+                <Conversation conversation={c} currentUser={user} />
               </div>
             ))}
           </div>
@@ -103,13 +133,6 @@ export default function Messenger() {
                 Open a conversation to start a chat.
               </span>
             )}
-            <div className="chatBoxBottom">
-              <textarea
-                className="chatMessageInput"
-                placeholder="write something..."
-              ></textarea>
-              <button className="chatSubmitButton">Send</button>
-            </div>
           </div>
         </div>
         <div className="chatOnline">
